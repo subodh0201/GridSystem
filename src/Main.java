@@ -14,7 +14,7 @@ public class Main {
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         window.setResizable(false);
 
-        Scene scene = new Scene(600, 600, 16, -600 / 32, -600 / 32, +4, +4);
+        Scene scene = new Scene(800, 600, 20, -800 / 40, 600 / 40, 0, 0);
         scene.addEntity(new Background());
 
         window.add(scene);

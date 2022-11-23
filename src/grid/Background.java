@@ -27,24 +27,37 @@ public class Background extends Entity {
 
     @Override
     public void render(Graphics2D g2D, Camera c) {
-        for (int i = 0; i <= c.tileCountX(); i++) {
-            for (int j = 0; j <= c.tileCountY(); j++) {
-                boolean even = (i + c.topLeftX() + j + c.topLeftY()) % 2 == 0;
+        for (int tileY = 0; tileY < c.tileCountY(); tileY++) {
+            for (int tileX = 0; tileX < c.tileCountX(); tileX++) {
+                boolean even = (c.tileToGridX(tileX) + c.tileToGridY(tileY)) % 2 == 0;
                 g2D.setColor(even ? evenTiles : oddTiles);
-                g2D.fillRect(c.screenX(c.topLeftX() + i), c.screenY(c.topLeftY() + j), c.tileSize(), c.tileSize());
+                g2D.fillRect(c.tileToScreenX(tileX), c.tileToScreenY(tileY), c.tileSize(), c.tileSize());
             }
         }
+
         g2D.setColor(axisBorders);
         // y-axis
         if (c.isVisibleX(0)) {
-            for (int j = 0; j <= c.tileCountY(); j++) {
-                g2D.drawRect(c.screenX(0), c.screenY(c.topLeftY() + j), c.tileSize(), c.tileSize());
+            for (int tileY = 0; tileY < c.tileCountY(); tileY++) {
+                g2D.drawRect(c.gridToScreenX(0), c.tileToScreenY(tileY), c.tileSize(), c.tileSize());
+                util.GraphicsUtil.drawCenteredString(
+                        g2D,
+                        c.tileToGridY(tileY) + "",
+                        new Rectangle(c.gridToScreenX(0), c.tileToScreenY(tileY), c.tileSize(), c.tileSize()),
+                        new Font(Font.SERIF, Font.PLAIN, c.tileSize() / 2)
+                );
             }
         }
         // x-axis
         if (c.isVisibleY(0)) {
-            for (int i = 0; i <= c.tileCountX(); i++) {
-                g2D.drawRect(c.screenX(c.topLeftX() + i), c.screenY(0), c.tileSize(), c.tileSize());
+            for (int tileX = 0; tileX < c.tileCountX(); tileX++) {
+                g2D.drawRect(c.tileToScreenX(tileX), c.gridToScreenY(0), c.tileSize(), c.tileSize());
+                util.GraphicsUtil.drawCenteredString(
+                        g2D,
+                        c.tileToGridX(tileX) + "",
+                        new Rectangle(c.tileToScreenX(tileX), c.gridToScreenY(0), c.tileSize(), c.tileSize()),
+                        new Font(Font.SERIF, Font.PLAIN, c.tileSize() / 2)
+                );
             }
         }
     }

@@ -1,9 +1,21 @@
 package grid;
 
 /**
- * class Camera represents a visible window of the grid.
- * It keeps track of where the visible tiles should be drawn
- * on the canvas and the size of tiles (determines the zoom)
+ * class Camera represents the visible part of the grid.
+ * Each point on the grid is displayed as a tile on the canvas.
+ * There are 3 coordinate systems in use:
+ *  * (gridX, gridY): "grid coordinate", Actual grid points
+ *      * Positive direction of x-axis: to the right
+ *      * Positive direction of y-axis: upwards
+ *  * (tileX, tileY): "tile coordinate", Visible tiles with
+ *      the top-left visible tile have coordinates (0,0)
+ *      * Positive direction of x-axis: to the right
+ *      * Positive direction of y-axis: downwards
+ *  * (screenX, screenY): "pixel coordinate" the coordinate
+ *      of the top left point of the tile on the canvas.
+ *      * Positive direction of x-axis: to the right
+ *      * Positive direction of y-axis: downwards
+ *
  * TODO:
  *  * add a method zoom() which changes tileSize and
  *    updates topLeft coordinates and offsets so that
@@ -20,18 +32,26 @@ public class Camera {
     // size of a tile in pixels
     private int tileSize = 16;
 
-    // x and y grid coordinates of top left tile
-    // which is within the camera boundaries
+    // x and y grid coordinates of tile (0,0)
     private int topLeftX = 0;
     private int topLeftY = 0;
 
-    // x and y offset of the top left tile from the
+    // x and y offset of the (0,0) tile from the
     // top left corner of the screen in pixels.
     // offset is normalized to be in (-tileSize, 0]
     private int offsetX = 0;
     private int offsetY = 0;
 
 
+    /**
+     * @param canvasWidth width of the canvas in pixels
+     * @param canvasHeight height of the canvas in pixels
+     * @param tileSize size of a tile in pixels
+     * @param topLeftX gridX coordinate of top-left point
+     * @param topLeftY gridY coordinate of top-left point
+     * @param offsetX x offset in pixels of the left-most tiles
+     * @param offsetY y offset in pixels of the top-most tiles
+     */
     public Camera(
             int canvasWidth, int canvasHeight,
             int tileSize,
@@ -57,29 +77,49 @@ public class Camera {
 
     public int offsetY() { return offsetY; }
 
+
     // returns the number of tiles visible along the width of the canvas
-    public int tileCountX() { return canvasWidth / tileSize + 1; }
+    public int tileCountX() { return canvasWidth / tileSize + 2; }
 
     // returns the number of tiles visible along the height of the canvas
-    public int tileCountY() { return canvasHeight / tileSize + 1; }
+    public int tileCountY() { return canvasHeight / tileSize + 2; }
+
+
+    public boolean isVisibleX(int gridX) {
+        int tileX = gridToTileX(gridX);
+        return tileX >= 0 && tileX < tileCountX();
+    }
+
+    public boolean isVisibleY(int gridY) {
+        int tileY = gridToTileY(gridY);
+        return tileY >= 0 && tileY < tileCountY();
+    }
+
+    private void setTopLeftToTileX(int tileX) {
+        topLeftX += tileX;
+    }
+
+    private void setTopLeftToTileY(int tileY) {
+        topLeftY -= tileY;
+    }
 
 
     // normalizes offset to be in (-tileSize, 0]
     private void normalizeOffset() {
         if (offsetX > 0) {
-            topLeftX -= offsetX / tileSize + 1;
+            setTopLeftToTileX(-(offsetX / tileSize + 1));
             offsetX = offsetX % tileSize - tileSize;
         }
         if (offsetY > 0) {
-            topLeftY -= offsetY / tileSize + 1;
+            setTopLeftToTileY(-(offsetY / tileSize + 1));
             offsetY = offsetY % tileSize - tileSize;
         }
         if (offsetX <= -tileSize) {
-            topLeftX += (-offsetX) / tileSize;
+            setTopLeftToTileX(-(offsetX / tileSize));
             offsetX = -(-offsetX % tileSize);
         }
         if (offsetY <= -tileSize) {
-            topLeftY += (-offsetY) / tileSize;
+            setTopLeftToTileY(-(offsetY / tileSize));
             offsetY = -(-offsetY % tileSize);
         }
     }
@@ -101,32 +141,54 @@ public class Camera {
         tileSize = pixels;
     }
 
+    // ***** Conversion Functions *****
 
-    // returns true if the x grid coordinate is visible
-    public boolean isVisibleX(int gridX) {
-        return (gridX - topLeftX >= 0 && gridX - topLeftX <= tileCountX());
+    public int tileToScreenX(int tileX) {
+        return tileX * tileSize + offsetX;
     }
 
-    // returns true if the y grid coordinate is visible
-    public boolean isVisibleY(int gridY) {
-        return (gridY - topLeftY >= 0 && gridY - topLeftY <= tileCountY());
+    public int tileToScreenY(int tileY) {
+        return tileY * tileSize + offsetY;
     }
 
-    // returns true if the grid point is visible
-    public boolean isVisible(int gridX, int gridY) {
-        return isVisibleX(gridX) && isVisibleY(gridY);
+    public int screenToTileX(int screenX) {
+        return (screenX - offsetX) / tileSize;
+    }
+
+    public int screenToTileY(int screenY) {
+        return (screenY - offsetY) / tileSize;
     }
 
 
-    // returns the x coordinate of the top left pixel
-    // of tiles which have gridX as x grid coordinate
-    public int screenX(int gridX) {
-        return (gridX - topLeftX) * tileSize + offsetX;
+    private int gridToTileX(int gridX) {
+        return gridX - topLeftX;
     }
 
-    // returns the y coordinate of the top left pixel
-    // of tiles which have gridY as y grid coordinate
-    public int screenY(int gridY) {
-        return (gridY - topLeftY) * tileSize + offsetY;
+    private int gridToTileY(int gridY) {
+        return topLeftY - gridY;
+    }
+
+    public int tileToGridX(int tileX) {
+        return topLeftX + tileX;
+    }
+
+    public int tileToGridY(int tileY) {
+        return topLeftY - tileY;
+    }
+
+    public int gridToScreenX(int gridX) {
+        return tileToScreenX(gridToTileX(gridX));
+    }
+
+    public int gridToScreenY(int gridY) {
+        return tileToScreenY(gridToTileY(gridY));
+    }
+
+    public int screenToGridX(int screenX) {
+        return tileToGridX(screenToTileX(screenX));
+    }
+
+    public int screenToGridY(int screenY) {
+        return tileToGridY(screenToTileY(screenY));
     }
 }

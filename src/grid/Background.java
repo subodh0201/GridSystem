@@ -5,7 +5,7 @@ import java.awt.*;
 /**
  * Background of grid.Scene
  */
-public class Background extends Entity {
+public class Background implements Entity {
     public final Color oddTiles;
     public final Color evenTiles;
     public final Color axisBorders;

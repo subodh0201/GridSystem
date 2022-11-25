@@ -77,6 +77,7 @@ public class Scene extends JPanel {
         Graphics2D g2D = (Graphics2D) g;
         for (Entity e : entities)
             e.render(g2D, camera);
+        g2D.dispose();
     }
 
 
@@ -101,7 +102,7 @@ public class Scene extends JPanel {
 
         @Override
         public void mouseWheelMoved(MouseWheelEvent e) {
-            eventQueue.enqueue(() -> camera.setTileSize(camera.tileSize() - e.getWheelRotation()));
+            eventQueue.enqueue(() -> camera.zoom(-e.getWheelRotation()));
         }
     }
 }

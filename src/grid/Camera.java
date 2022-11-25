@@ -15,11 +15,6 @@ package grid;
  *      of the top left point of the tile on the canvas.
  *      * Positive direction of x-axis: to the right
  *      * Positive direction of y-axis: downwards
- *
- * TODO:
- *  * add a method zoom() which changes tileSize and
- *    updates topLeft coordinates and offsets so that
- *    zoom in and out is with respect to the center
  */
 public class Camera {
     // minimum size of a tile in pixels
@@ -37,10 +32,10 @@ public class Camera {
     private int topLeftY = 0;
 
     // x and y offset of the (0,0) tile from the
-    // top left corner of the screen in pixels.
-    // offset is normalized to be in (-tileSize, 0]
-    private int offsetX = 0;
-    private int offsetY = 0;
+    // top left corner of the screen in fraction
+    // of the tile size normalized to be in (-1, 0]
+    private double offsetX = 0;
+    private double offsetY = 0;
 
 
     /**
@@ -73,9 +68,11 @@ public class Camera {
 
     public int topLeftY() { return topLeftY; }
 
-    public int offsetX() { return offsetX; }
+    // returns the x offset on pixels
+    public int offsetX() { return (int)(offsetX * tileSize); }
 
-    public int offsetY() { return offsetY; }
+    // returns the y offset in pixels
+    public int offsetY() { return (int)(offsetY * tileSize); }
 
 
     // returns the number of tiles visible along the width of the canvas
@@ -104,59 +101,76 @@ public class Camera {
     }
 
 
-    // normalizes offset to be in (-tileSize, 0]
+    // normalizes offset to be in (-1, 0]
     private void normalizeOffset() {
-        if (offsetX > 0) {
-            setTopLeftToTileX(-(offsetX / tileSize + 1));
-            offsetX = offsetX % tileSize - tileSize;
+        if (offsetX > 0 || offsetX <= -1) {
+            int w = (int) offsetX;
+            double f = offsetX % 1;
+            if (f > 0) {
+                w += 1;
+                f -= 1;
+            }
+            setTopLeftToTileX(-w);
+            offsetX = f;
         }
-        if (offsetY > 0) {
-            setTopLeftToTileY(-(offsetY / tileSize + 1));
-            offsetY = offsetY % tileSize - tileSize;
-        }
-        if (offsetX <= -tileSize) {
-            setTopLeftToTileX(-(offsetX / tileSize));
-            offsetX = -(-offsetX % tileSize);
-        }
-        if (offsetY <= -tileSize) {
-            setTopLeftToTileY(-(offsetY / tileSize));
-            offsetY = -(-offsetY % tileSize);
+        if (offsetY > 0 || offsetY <= -1) {
+            int w = (int) offsetY;
+            double f = offsetY % 1;
+            if (f > 0) {
+                w += 1;
+                f -= 1;
+            }
+            setTopLeftToTileY(-w);
+            offsetY = f;
         }
     }
 
-
-    // adds offset in pixels (can be used to pan the camera)
-    public void addOffset(int offsetX, int offsetY) {
+    public void addOffset(double offsetX, double offsetY) {
         this.offsetX += offsetX;
         this.offsetY += offsetY;
         normalizeOffset();
+    }
+
+    // adds offset in pixels (can be used to pan the camera)
+    public void addOffset(int offsetX, int offsetY) {
+        addOffset((double)offsetX / tileSize, (double)offsetY / tileSize);
     }
 
 
     // sets the tile size in pixels
     public void setTileSize(int pixels) {
         pixels = Math.max(MIN_TILE_SIZE, pixels);
-        offsetX = offsetX * pixels / tileSize;
-        offsetY = offsetY * pixels / tileSize;
         tileSize = pixels;
     }
+
+
+    public void zoom(int pixels) {
+        double oldWidthX = (double)canvasWidth / tileSize;
+        double oldWidthY = (double)canvasHeight / tileSize;
+        setTileSize(tileSize + pixels);
+        double diffX = (double)canvasWidth / tileSize - oldWidthX;
+        double diffY = (double)canvasHeight / tileSize - oldWidthY;
+        addOffset(diffX / 2, diffY / 2);
+
+    }
+
 
     // ***** Conversion Functions *****
 
     public int tileToScreenX(int tileX) {
-        return tileX * tileSize + offsetX;
+        return tileX * tileSize + offsetX();
     }
 
     public int tileToScreenY(int tileY) {
-        return tileY * tileSize + offsetY;
+        return tileY * tileSize + offsetY();
     }
 
     public int screenToTileX(int screenX) {
-        return (screenX - offsetX) / tileSize;
+        return (screenX - offsetX()) / tileSize;
     }
 
     public int screenToTileY(int screenY) {
-        return (screenY - offsetY) / tileSize;
+        return (screenY - offsetY()) / tileSize;
     }
 
 

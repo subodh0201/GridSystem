@@ -81,14 +81,14 @@ public class Simulation implements Entity {
     @Override
     public void update() {
         switch (state) {
-            case READY, DONE, ERROR, PAUSED -> {}
-            case CYCLE -> {
+            case CYCLE: {
                 round++;
                 System.out.println("Round: " + round);
                 state = SimulationStates.LOOK;
                 System.out.println("Look");
+                break;
             }
-            case LOOK -> {
+            case LOOK: {
                 look();
                 if (isComplete()) {
                     state = SimulationStates.DONE;
@@ -97,21 +97,25 @@ public class Simulation implements Entity {
                     state = SimulationStates.COMPUTE;
                     System.out.println("compute");
                 }
-
+                break;
             }
-            case COMPUTE -> {
+            case COMPUTE: {
                 compute();
                 state = SimulationStates.MOVE;
                 framesSinceLastMove = 0;
                 System.out.println("move");
+                break;
             }
-            case MOVE -> {
+            case MOVE: {
                 if (framesSinceLastMove < moveAfterFrames) framesSinceLastMove++;
                 else {
                     framesSinceLastMove = 0;
                     move();
                 }
+                break;
             }
+            default:
+                break;
         }
     }
 

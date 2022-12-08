@@ -17,8 +17,13 @@ public abstract class Robot {
         return new Point(position);
     }
 
-    public void setPosition(Point position) {
-        this.position = new Point(position);
+    public void move(Direction d) {
+        switch (d) {
+            case UP: position.y += 1; break;
+            case DOWN: position.y -= 1; break;
+            case RIGHT: position.x += 1; break;
+            case LEFT: position.x -= 1; break;
+        }
     }
 
     /**
@@ -30,5 +35,5 @@ public abstract class Robot {
      * @param F location of fixed points in local coordinate system
      * @return a path to destination in local coordinate system
      */
-    public abstract Queue<Point> LCM(Point[] R, Point[] F);
+    public abstract Queue<Direction> LCM(Point[] R, Point[] F);
 }

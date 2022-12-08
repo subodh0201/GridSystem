@@ -12,13 +12,9 @@ import java.util.Queue;
  * The robots execute a look-compute-move cycle synchronously.
  */
 public class Simulation implements Entity {
-    // Robots in the simulation
-    private final Robot[] robots;
 
-    // if xAxisDirectionAligned[i] is true the x-axis direction of
-    // robot[i] is aligned with the global coordinate system else
-    // it is the opposite direction.
-    private final boolean[] xAxisDirectionAligned;
+    // Robots in this simulation
+    private final RobotInterface[] robotInterfaces;
 
     // fixed points in the simulation
     private final Point[] fixedPoints;
@@ -36,35 +32,30 @@ public class Simulation implements Entity {
     // number of frames passed since last move
     private int framesSinceLastMove = 0;
 
-    // paths[i] is a queue of points representing the path robot[i]
+    // paths[i] is a queue of Directions representing the path robot[i]
     // will take in the move phase
-    private final Queue<Point>[] paths;
+    private final Queue<Direction>[] paths;
 
     // position of robots and fixed points in global coordinate system
-    // and with the x-axis directions reversed.
-    private final Point[] R, R_, F, F_;
+    private final Point[] R, F;
 
     // should the simulation go to error state on collision?
     private final boolean errorOnCollision;
 
     public Simulation(
-            Robot[] robots,
-            boolean[] xAxisDirectionAligned,
+            RobotInterface[] robotInterfaces,
             Point[] fixedPoints,
             int moveAfterFrames,
             boolean errorOnCollision
     ) {
-        this.robots = robots;
-        this.xAxisDirectionAligned = xAxisDirectionAligned;
+        this.robotInterfaces = robotInterfaces;
         this.fixedPoints = fixedPoints;
         this.moveAfterFrames = moveAfterFrames;
         this.errorOnCollision = errorOnCollision;
-        this.paths = (Queue<Point>[]) new Queue[robots.length];
+        this.paths = (Queue<Direction>[]) new Queue[robotInterfaces.length];
 
-        R = new Point[robots.length];
-        R_ = new Point[robots.length];
+        R = new Point[robotInterfaces.length];
         F = new Point[fixedPoints.length];
-        F_ = new Point[fixedPoints.length];
 
         this.state = SimulationStates.READY;
 
@@ -120,33 +111,25 @@ public class Simulation implements Entity {
     }
 
     private void look() {
-        for (int i = 0; i < robots.length; i++) {
-            R[i] = new Point(robots[i].getPosition());
-            R_[i] = new Point(robots[i].getPosition());
-            R_[i].x = -R_[i].x;
+        for (int i = 0; i < robotInterfaces.length; i++) {
+            R[i] = robotInterfaces[i].getPosition();
         }
         for (int i = 0; i < fixedPoints.length; i++) {
             F[i] = new Point(fixedPoints[i]);
-            F_[i] = new Point(fixedPoints[i]);
-            F_[i].x = -F_[i].x;
         }
     }
 
     private void compute() {
-        for (int i = 0; i < robots.length; i++) {
-            if (xAxisDirectionAligned[i]) {
-                paths[i] = robots[i].LCM(R, F);
-            } else {
-                paths[i] = robots[i].LCM(R_, F_);
-            }
+        for (int i = 0; i < robotInterfaces.length; i++) {
+            paths[i] = robotInterfaces[i].LCM(R, F);
         }
     }
 
     private void move() {
         boolean complete = true;
-        for (int i = 0; i < robots.length; i++) {
+        for (int i = 0; i < robotInterfaces.length; i++) {
             if (!paths[i].isEmpty()) {
-                robots[i].setPosition(paths[i].poll());
+                robotInterfaces[i].move(paths[i].poll());
                 complete = false;
             }
         }
@@ -160,8 +143,8 @@ public class Simulation implements Entity {
         boolean collision = false;
         HashSet<Point> points = new HashSet<>();
         StringBuilder sb = new StringBuilder("Collision at:");
-        for (int i = 0; i < robots.length; i++) {
-            Point p = globalCoordinate(i);
+        for (RobotInterface robotInterface : robotInterfaces) {
+            Point p = robotInterface.getPosition();
             if (!points.add(p)) {
                 sb.append(" (").append(p.x).append(", ").append(p.y).append(')');
                 collision = true;
@@ -176,12 +159,6 @@ public class Simulation implements Entity {
         return false;
     }
 
-    private Point globalCoordinate(int i) {
-        Point p = new Point(robots[i].getPosition());
-        if (!xAxisDirectionAligned[i]) p.x = -p.x;
-        return p;
-    }
-
     @Override
     public void render(Graphics2D g2D, Camera c) {
         g2D.setColor(Color.GREEN);
@@ -189,8 +166,8 @@ public class Simulation implements Entity {
             g2D.fillRect(c.gridToScreenX(p.x), c.gridToScreenY(p.y), c.tileSize(), c.tileSize());
         }
         g2D.setColor(Color.RED);
-        for (int i = 0; i < robots.length; i++) {
-            Point p = globalCoordinate(i);
+        for (RobotInterface robotInterface : robotInterfaces) {
+            Point p = robotInterface.getPosition();
             g2D.fillOval(c.gridToScreenX(p.x), c.gridToScreenY(p.y), c.tileSize(), c.tileSize());
         }
     }

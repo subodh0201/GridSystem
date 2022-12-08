@@ -3,6 +3,7 @@ import javax.swing.*;
 import grid.Background;
 import grid.Scene;
 import kcf.RandomRobot;
+import kcf.RobotInterface;
 import kcf.Simulation;
 import util.RandomUtil;
 
@@ -37,15 +38,12 @@ public class Main {
         window.setLocationRelativeTo(null);
         window.setVisible(true);
 
-        // creating robots
-        RandomRobot[] robots = new RandomRobot[50];
-        for (int i = 0; i < robots.length; i++)
-            robots[i] = new RandomRobot(RandomUtil.uniformPoint(-20, 20));
-
-        // random direction of x axis for each robot
-        boolean[] xAxisDirectionAligned = new boolean[robots.length];
-        for (int i = 0; i < xAxisDirectionAligned.length; i++)
-            xAxisDirectionAligned[i] = Math.random() < 0.5;
+        RobotInterface[] robotInterfaces = new RobotInterface[20];
+        for (int i = 0; i < robotInterfaces.length; i++)
+            robotInterfaces[i] = new RobotInterface(
+                    new RandomRobot(RandomUtil.uniformPoint(-20, 20)),
+                    Math.random() < 0.5
+            );
 
         // creating fixed points
         Point[] fixedPoints = new Point[10];
@@ -53,7 +51,7 @@ public class Main {
             fixedPoints[i] = RandomUtil.uniformPoint(-20, 20);
 
         // creating the simulation
-        Simulation s = new Simulation(robots, xAxisDirectionAligned, fixedPoints, 60, false);
+        Simulation s = new Simulation(robotInterfaces, fixedPoints, 60, false);
         scene.addEntity(s);
 
         scene.drawLoop.start();

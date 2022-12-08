@@ -17,27 +17,22 @@ public class RandomRobot extends Robot {
     }
 
     @Override
-    public Queue<Point> LCM(Point[] R, Point[] F) {
+    public Queue<Direction> LCM(Point[] R, Point[] F) {
         int dx = RandomUtil.uniform(-10, 10);
         int dy = RandomUtil.uniform(-10, 10);
         return path(dx ,dy);
     }
 
-    private Queue<Point> path(int dx, int dy) {
-        Queue<Point> path = new LinkedList<>();
-        Point cur = new Point(position);
-        while (dx != 0 || dy != 0) {
-            cur.x += direction(dx);
-            cur.y += direction(dy);
-            dx -= direction(dx);
-            dy -= direction(dy);
-            path.offer(new Point(cur));
+    private Queue<Direction> path(int dx, int dy) {
+        Queue<Direction> path = new LinkedList<>();
+        Direction d = (dx > 0) ? Direction.RIGHT : Direction.LEFT;
+        for (int i = 0; i < Math.abs(dx); i++) {
+            path.add(d);
+        }
+        d = (dy > 0) ? Direction.UP : Direction.DOWN;
+        for (int i = 0; i < Math.abs(dy); i++) {
+            path.add(d);
         }
         return path;
-    }
-
-    private int direction(int d) {
-        if (d == 0) return 0;
-        return d < 0 ? -1 : 1;
     }
 }
